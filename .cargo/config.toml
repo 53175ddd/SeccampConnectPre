@@ -1,9 +1,6 @@
 [target.'cfg(all(any(target_arch = "riscv32", target_arch = "xtensa"), target_os = "none"))']
 runner = "espflash flash --monitor"
 
-[unstable]
-build-std = ["core", "compiler_builtins", "alloc"]
-
 [build]
 target = "riscv32imac-unknown-none-elf"
 rustflags = [
