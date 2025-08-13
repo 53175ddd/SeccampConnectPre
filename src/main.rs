@@ -84,10 +84,10 @@ async fn main(_s: Spawner) {
     let flash = async_flash_wrapper(flash);
 
     // Initialize the IO pins
-    let (input_pins, output_pins) = config_matrix_pins_esp!(peripherals: peripherals, input: [GPIO6, GPIO7, GPIO20, GPIO21], output: [GPIO3, GPIO4, GPIO5]);
+    let (input_pins, output_pins) = config_matrix_pins_esp!(peripherals: peripherals, input: [GPIO2, GPIO19], output: [GPIO21, GPIO22, GPIO23]);
 
     // RMK config
-    let vial_config = VialConfig::new(VIAL_KEYBOARD_ID, VIAL_KEYBOARD_DEF);
+    let vial_config = VialConfig::new(VIAL_KEYBOARD_ID, VIAL_KEYBOARD_DEF, &[(0, 0), (1, 1)]);
     let storage_config = StorageConfig {
         start_addr: 0x3f0000,
         num_sectors: 16,
@@ -104,7 +104,8 @@ async fn main(_s: Spawner) {
     let mut default_keymap = keymap::get_default_keymap();
     let behavior_config = BehaviorConfig::default();
     let (keymap, mut storage) =
-        initialize_keymap_and_storage(&mut default_keymap, flash, &storage_config, behavior_config).await;
+        initialize_keymap_and_storage(&mut default_keymap, flash, &storage_config, behavior_config)
+            .await;
 
     // Initialize the matrix and keyboard
     let debouncer = DefaultDebouncer::<ROW, COL>::new();
@@ -112,15 +113,12 @@ async fn main(_s: Spawner) {
     // let mut matrix = rmk::matrix::TestMatrix::<ROW, COL>::new();
     let mut keyboard = Keyboard::new(&keymap); // Initialize the light controller
 
-    // Initialize the light controller
-    let mut light_controller: LightController<Output> = LightController::new(ControllerConfig::default().light_config);
-
     join3(
         run_devices! (
             (matrix) => EVENT_CHANNEL,
         ),
         keyboard.run(), // Keyboard is special
-        run_rmk(&keymap, &stack, &mut storage, &mut light_controller, rmk_config),
+        run_rmk(&keymap, &stack, &mut storage, rmk_config),
     )
     .await;
 }
