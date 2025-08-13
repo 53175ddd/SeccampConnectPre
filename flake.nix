@@ -17,39 +17,77 @@
       let
         pkgs = import nixpkgs { inherit system; };
 
-        toolchain =
-          with fenix.packages.${system};
-          combine (
-            with complete;
-            [
-              rustc
-              cargo
-              rust-src
-              clippy
-              rustfmt
-              rust-analyzer
-            ]
-          );
-        riscvToolchain = fenix.packages.${system}.targets.riscv32imac-unknown-none-elf.latest.rust-std;
+        # Read the toolchain definition from rust-toolchain.toml.
+        spec = (builtins.fromTOML (builtins.readFile ./rust-toolchain.toml)).toolchain;
+
+        # Get the list of components for the toolchain.
+        userComponents = spec.components or [ ];
+        baseComponents = [
+          "rustc"
+          "cargo"
+          "rust-src"
+          "clippy"
+          "rustfmt"
+          "rust-analyzer"
+        ];
+        components = pkgs.lib.unique (userComponents ++ baseComponents);
+
+        # Get the list of targets for cross-compilation.
+        targets = spec.targets or [ ];
+
+        # Map common channel names to the names fenix uses.
+        # This allows using "nightly" in rust-toolchain.toml, which we map to "latest".
+        toolchainName =
+          if spec.channel == "nightly" then
+            "latest"
+          else if spec.channel == "stable" then
+            "stable"
+          else if spec.channel == "beta" then
+            "beta"
+          else
+            spec.channel; # Otherwise, assume a dated version like "nightly-YYYY-MM-DD"
+
+        # Select the toolchain using the mapped name.
+        toolchainForChannel = fenix.packages.${system}."${toolchainName}";
+
+        # Build the host toolchain with all specified components.
+        hostToolchain = toolchainForChannel.withComponents components;
+
+        # Build the standard libraries for all specified cross-compilation targets.
+        targetLibs = builtins.map (
+          target: fenix.packages.${system}.targets."${target}"."${toolchainName}".rust-std
+        ) targets;
+
+        # Determine the primary cross-compilation target to set RUSTFLAGS.
+        primaryTarget = if targets == [ ] then null else builtins.head targets;
+        primaryTargetLib = if targetLibs == [ ] then null else builtins.head targetLibs;
+
       in
       {
         devShell =
           with pkgs;
           mkShell rec {
-            buildInputs = [
-              toolchain
-              riscvToolchain
-              espflash
-              python3
-              python3Packages.pyserial
-              python3Packages.requests
-              llvmPackages_19.libclang
-              ldproxy
-            ];
+            # Combine the host toolchain, target libraries, and other dependencies.
+            buildInputs =
+              [ hostToolchain ]
+              ++ targetLibs
+              ++ [
+                espflash
+                python3
+                python3Packages.pyserial
+                python3Packages.requests
+                llvmPackages_19.libclang
+                ldproxy
+              ];
 
-            RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
+            RUST_SRC_PATH = "${hostToolchain}/lib/rustlib/src/rust/library";
             LIBCLANG_PATH = "${pkgs.llvmPackages_19.libclang.lib}/lib";
-            RUSTFLAGS = "-L ${riscvToolchain}/lib/rustlib/riscv32imac-unknown-none-elf/lib";
+
+            # Set RUSTFLAGS using the path to the primary target's standard library.
+            RUSTFLAGS = pkgs.lib.optionalString (
+              primaryTarget != null
+            ) "-L ${primaryTargetLib}/lib/rustlib/${primaryTarget}/lib";
+
             RUST_BACKTRACE = 1;
           };
       }
