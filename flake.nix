@@ -30,7 +30,7 @@
               rust-analyzer
             ]
           );
-        riscvToolchain = fenix.packages.${system}.targets.riscv32imc-unknown-none-elf.latest.rust-std;
+        riscvToolchain = fenix.packages.${system}.targets.riscv32imac-unknown-none-elf.latest.rust-std;
       in
       {
         devShell =
@@ -47,8 +47,9 @@
               ldproxy
             ];
 
-            #RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
+            RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
             LIBCLANG_PATH = "${pkgs.llvmPackages_19.libclang.lib}/lib";
+            RUSTFLAGS = "-L ${riscvToolchain}/lib/rustlib/riscv32imac-unknown-none-elf/lib";
             RUST_BACKTRACE = 1;
           };
       }
