@@ -46,11 +46,12 @@ use esp_storage::FlashStorage;
 use esp_wifi::ble::controller::BleConnector;
 use rmk::ble::trouble::build_ble_stack;
 use rmk::channel::EVENT_CHANNEL;
-use rmk::config::{BehaviorConfig, RmkConfig, StorageConfig, VialConfig};
+use rmk::config::{BehaviorConfig, ControllerConfig, RmkConfig, StorageConfig, VialConfig};
 use rmk::debounce::default_debouncer::DefaultDebouncer;
 use rmk::futures::future::join3;
 use rmk::input_device::Runnable;
 use rmk::keyboard::Keyboard;
+use rmk::light::LightController;
 use rmk::matrix::Matrix;
 use rmk::storage::async_flash_wrapper;
 use rmk::{HostResources, initialize_keymap_and_storage, run_devices, run_rmk};
@@ -69,7 +70,7 @@ async fn main(_s: Spawner) {
     esp_alloc::heap_allocator!(size: 64 * 1024);
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     let mut rng = esp_hal::rng::Trng::new(peripherals.RNG, peripherals.ADC1);
-    let init = esp_wifi::init(timg0.timer0, rng.rng.clone()).unwrap();
+    let init = esp_wifi::init(timg0.timer0, rng.rng).unwrap();
     let systimer = esp_hal::timer::systimer::SystemTimer::new(peripherals.SYSTIMER);
     esp_hal_embassy::init(systimer.alarm0);
     let bluetooth = peripherals.BT;
@@ -87,7 +88,7 @@ async fn main(_s: Spawner) {
     let (input_pins, output_pins) = config_matrix_pins_esp!(peripherals: peripherals, input: [GPIO20, GPIO21], output: [GPIO2, GPIO22, GPIO23]);
 
     // RMK config
-    let vial_config = VialConfig::new(VIAL_KEYBOARD_ID, VIAL_KEYBOARD_DEF, &[(0, 0), (1, 1)]);
+    let vial_config = VialConfig::new(VIAL_KEYBOARD_ID, VIAL_KEYBOARD_DEF);
     let storage_config = StorageConfig {
         start_addr: 0x3f0000,
         num_sectors: 16,
@@ -113,12 +114,22 @@ async fn main(_s: Spawner) {
     // let mut matrix = rmk::matrix::TestMatrix::<ROW, COL>::new();
     let mut keyboard = Keyboard::new(&keymap); // Initialize the light controller
 
+    // Initialize the light controller
+    let mut light_controller: LightController<Output> =
+        LightController::new(ControllerConfig::default().light_config);
+
     join3(
         run_devices! (
             (matrix) => EVENT_CHANNEL,
         ),
         keyboard.run(), // Keyboard is special
-        run_rmk(&keymap, &stack, &mut storage, rmk_config),
+        run_rmk(
+            &keymap,
+            &stack,
+            &mut storage,
+            &mut light_controller,
+            rmk_config,
+        ),
     )
     .await;
 }
