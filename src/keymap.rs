@@ -8,12 +8,12 @@ pub(crate) const NUM_LAYER: usize = 2;
 pub const fn get_default_keymap() -> [[[KeyAction; COL]; ROW]; NUM_LAYER] {
     [
         layer!([
-            [k!(Kp7), k!(Kp8), k!(Kp9)],
-            [mo!(1), k!(Kp5), k!(Kp6)]
+            [k!(A), k!(B), k!(Backspace)],
+            [mo!(1), k!(D), k!(E)]
         ]),
         layer!([
-            [k!(Kp7), k!(Kp8), k!(Kp9)],
-            [k!(Kp4), k!(Kp5), k!(Kp6)]
+            [k!(F), k!(G), k!(H)],
+            [k!(I), k!(Kc5), k!(Kc6)]
         ]),
     ]
 }
