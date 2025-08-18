@@ -3,6 +3,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     utils.url = "github:numtide/flake-utils";
     fenix.url = "github:nix-community/fenix";
+    esp-dev.url = "github:mirrexagon/nixpkgs-esp-dev";
   };
 
   outputs =
@@ -11,6 +12,7 @@
       nixpkgs,
       utils,
       fenix,
+      esp-dev,
     }:
     utils.lib.eachDefaultSystem (
       system:
@@ -68,17 +70,19 @@
           with pkgs;
           mkShell rec {
             # Combine the host toolchain, target libraries, and other dependencies.
-            buildInputs =
-              [ hostToolchain ]
-              ++ targetLibs
-              ++ [
-                espflash
-                python3
-                python3Packages.pyserial
-                python3Packages.requests
-                llvmPackages_19.libclang
-                ldproxy
-              ];
+            buildInputs = [
+              hostToolchain
+            ]
+            ++ targetLibs
+            ++ [
+              espflash
+              esp-dev.packages.${system}.esp-idf-esp32c6
+              python3
+              python3Packages.pyserial
+              python3Packages.requests
+              llvmPackages_19.libclang
+              ldproxy
+            ];
 
             RUST_SRC_PATH = "${hostToolchain}/lib/rustlib/src/rust/library";
             LIBCLANG_PATH = "${pkgs.llvmPackages_19.libclang.lib}/lib";
