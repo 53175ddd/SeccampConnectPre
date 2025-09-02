@@ -9,11 +9,11 @@ pub const fn get_default_keymap() -> [[[KeyAction; COL]; ROW]; NUM_LAYER] {
     [
         layer!([
             [k!(A), k!(B), k!(Backspace)],
-            [mo!(1), k!(D), k!(E)]
+            [k!(C), k!(D), mo!(1)]
         ]),
         layer!([
-            [k!(F), k!(G), k!(H)],
-            [k!(I), k!(Kc5), k!(Kc6)]
+            [k!(E), k!(F), k!(Enter)],
+            [k!(Kc4), k!(Kc5), k!(Kc6)]
         ]),
     ]
 }
