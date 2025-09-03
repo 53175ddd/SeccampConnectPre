@@ -1,11 +1,9 @@
 [package]
 name = "rmk-esp32c6"
-version = "0.2.0"
-authors = ["Haobo Gu <haobogu@outlook.com>"]
-description = "Keyboard firmware written in Rust"
-homepage = "https://github.com/haobogu/rmk"
-repository = "https://github.com/haobogu/rmk"
-readme = "../../README.md"
+version = "0.1.0"
+authors = ["Norimasa TAKANA <alignof@outlook.com>"]
+description = "Keyboard firmware for xiao esp32c6 written in Rust"
+repository = "https://github.com/Alignof/SeccampConnectPre"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 
