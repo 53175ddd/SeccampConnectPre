@@ -43,6 +43,16 @@ name = "rmk-esp32c6"
 test = false
 bench = false
 
+[lints.clippy]
+pedantic = "warn"
+missing_docs_in_private_items = "warn"
+
+[lints.rust]
+missing_docs = "warn"
+
+[lints.rustdoc]
+missing_crate_level_docs = "warn"
+
 [profile.dev.package.esp-storage]
 opt-level = 3
 
