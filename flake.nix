@@ -82,6 +82,7 @@
               python3Packages.requests
               llvmPackages_19.libclang
               ldproxy
+              vial
             ];
 
             RUST_SRC_PATH = "${hostToolchain}/lib/rustlib/src/rust/library";
